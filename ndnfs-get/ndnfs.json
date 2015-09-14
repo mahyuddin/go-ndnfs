@@ -1,6 +1,4 @@
 {
-	"PrivateKeyPath": "key/default.pri",
-	"ContentDB": "ndnfs.db",
 	"NFD": {
 		"Network": "tcp",
 		"Address": ":6363"

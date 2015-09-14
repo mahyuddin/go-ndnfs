@@ -7,6 +7,4 @@ var config struct {
 	File struct {
 		Dir, Prefix string
 	}
-	PrivateKeyPath string
-	ContentDB string
 }
