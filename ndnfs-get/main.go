@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"flag"
@@ -13,6 +14,7 @@ import (
 )
 
 var (
+	configPath = flag.String("config", "ndnfs.json", "config path")
 	filePrefix = flag.String("prefix","/ndn/file/hosts","name prefix for shared file")
 )
 
@@ -26,8 +28,20 @@ func check(e error) {
 func main() {
 	flag.Parse()
 
+	// config
+	configFile, err := os.Open(*configPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer configFile.Close()
+
+	err = json.NewDecoder(configFile).Decode(&config)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// connect to nfd
-	conn, err := packet.Dial("unix", "/tmp/nfd.sock")
+	conn, err := packet.Dial(config.NFD.Network, config.NFD.Address)
 	if err != nil {
 		log.Fatalln(err)
 	}

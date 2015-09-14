@@ -6,7 +6,7 @@
 		"Address": ":6363"
 	},
 	"File": {
-		"Dir": "/home/mahyuddin/build/share/",
+		"Dir": "~/share/",
 		"Prefix": "/ndn/file"
 	}
 }

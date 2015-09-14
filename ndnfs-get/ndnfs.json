@@ -1,0 +1,12 @@
+{
+	"PrivateKeyPath": "key/default.pri",
+	"ContentDB": "ndnfs.db",
+	"NFD": {
+		"Network": "tcp",
+		"Address": ":6363"
+	},
+	"File": {
+		"Dir": "~/share/",
+		"Prefix": "/ndn/file"
+	}
+}
