@@ -16,6 +16,7 @@ import (
 
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
+	debug      = flag.Bool("debug", false, "enable logging")
 	//filePrefix = flag.String("prefix","/ndn/file","name prefix for shared directory")
 	//fileDir	= flag.String("dir","/etc","file directory to share")
 )
@@ -63,6 +64,13 @@ func main() {
 	// create a new face
 	recv := make(chan *ndn.Interest)
 	face := ndn.NewFace(conn, recv)
+
+	if *debug {
+		face.Logger = log.New(log.Stderr, fmt.Sprintf("[%s] ", conn.RemoteAddr()))
+	} else {
+		face.Logger = log.Discard
+	}
+
 	defer face.Close()
 
 	// create an interest mux
