@@ -1,10 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
-	"flag"
 	"strings"
 
 	"github.com/go-ndn/log"
@@ -15,14 +16,13 @@ import (
 
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
-	filePrefix = flag.String("prefix","/ndn/file/hosts","name prefix for shared file")
+	filePrefix = flag.String("prefix", "/ndn/file/hosts", "name prefix for shared file")
 )
 
-
 func check(e error) {
-    if e != nil {
-        panic(e)
-    }
+	if e != nil {
+		panic(e)
+	}
 }
 
 func main() {
@@ -67,16 +67,19 @@ func main() {
 	// note: middleware can be both global and local to one handler
 	data := f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
 
-	fileSplit := strings.Split(*filePrefix,"/")
-	fileName := fileSplit[len(fileSplit)-1] 
+	fileSplit := strings.Split(*filePrefix, "/")
+	fileName := fileSplit[len(fileSplit)-1]
 	file, err := os.Create(fileName)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer file.Close()
-	
-	databytes, err := file.Write(data)
-    	check(err)
-    	fmt.Printf("wrote %d bytes\n", databytes)
-	file.Sync()
+
+	filebuffer := bufio.NewWriter(file)
+	databytes, err := filebuffer.Write(data)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Printf("wrote %d bytes\n", databytes)
+	filebuffer.Flush()
 }

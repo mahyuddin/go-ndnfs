@@ -2,9 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"os"
-	"fmt"
 	"flag"
+	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/go-ndn/log"
@@ -30,9 +30,8 @@ var (
 	key ndn.Key
 )
 
-
 func main() {
-	
+
 	flag.Parse()
 
 	// config
@@ -99,19 +98,18 @@ func main() {
 	files, err := filepath.Glob(config.File.Dir + "/*")
 	if err != nil {
 		log.Fatalln(err)
-	}else
-	{
+	} else {
 		fmt.Println()
 		fmt.Println("List of files")
 		fmt.Println("-------------")
 		for i := 0; i < len(files); i++ {
-		
+
 			if IsFile(files[i]) {
-				_,filename := filepath.Split(files[i])
-				fmt.Println("[",i,"] -",filename)
+				_, filename := filepath.Split(files[i])
+				fmt.Println("[", i, "] -", filename)
 			}
 
-    	}
+		}
 
 	}
 
@@ -138,16 +136,16 @@ func newFace(network, address string, recv chan<- *ndn.Interest) (f *face, err e
 	return
 }
 
-func IsFile (f string) (filestatus bool) {
+func IsFile(f string) (filestatus bool) {
 
-	info,_ := os.Stat(f)
+	info, _ := os.Stat(f)
 
 	switch mode := info.Mode(); {
-    case mode.IsDir():
-        filestatus = false
-    case mode.IsRegular():
-        filestatus = true
-    }
+	case mode.IsDir():
+		filestatus = false
+	case mode.IsRegular():
+		filestatus = true
+	}
 
-    return
+	return
 }
