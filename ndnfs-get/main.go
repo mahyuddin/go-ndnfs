@@ -1,10 +1,11 @@
 package main
 
 import (
-	"bufio"
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -75,11 +76,11 @@ func main() {
 	}
 	defer file.Close()
 
-	filebuffer := bufio.NewWriter(file)
-	databytes, err := filebuffer.Write(data)
+	databytes, err := io.Copy(file, bytes.NewReader(data))
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	fmt.Printf("wrote %d bytes\n", databytes)
-	filebuffer.Flush()
+
 }
