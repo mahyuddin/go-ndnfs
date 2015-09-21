@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	//"io/ioutil"
+	"bufio"
+	"strings"
 
 	"github.com/go-ndn/log"
 	"github.com/go-ndn/mux"
@@ -113,7 +116,7 @@ func main() {
 
 	}
 
-	m.Handle(mux.FileServer(config.File.Prefix, config.File.Dir))
+	m.Handle(FileServer(config.File.Prefix, config.File.Dir))
 
 	// pump the face's incoming interests into the mux
 	m.Run(local, recv, key)
@@ -148,4 +151,29 @@ func IsFile(f string) (filestatus bool) {
 	}
 
 	return
+}
+
+func FileServer(from, to string) (string, mux.Handler) {
+	return from, mux.HandlerFunc(func(w ndn.Sender, i *ndn.Interest) {
+		//content, err := ioutil.ReadFile(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
+		//if err != nil {
+		//	return
+		//}
+		file, err := os.Open(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
+        if err != nil {
+                 return
+        }
+
+        fileInfo, _ := file.Stat()
+        var fileSize int64 = fileInfo.Size()
+        bytes := make([]byte, fileSize)
+
+        buffer := bufio.NewReader(file)
+        _, err = buffer.Read(bytes)
+
+		w.SendData(&ndn.Data{
+			Name:    i.Name,
+			Content: bytes,
+		})
+	})
 }
