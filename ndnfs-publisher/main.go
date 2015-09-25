@@ -98,6 +98,10 @@ func main() {
 	m.Use(mux.Cacher)
 	// 0. an interest packet comes
 
+	fmt.Println("")
+	fmt.Println("Prefix = ", config.File.Prefix)
+	fmt.Println("")
+
 	files, err := filepath.Glob(config.File.Dir + "/*")
 	if err != nil {
 		log.Fatalln(err)
