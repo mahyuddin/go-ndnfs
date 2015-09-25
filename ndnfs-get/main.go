@@ -29,6 +29,8 @@ func check(e error) {
 func main() {
 	flag.Parse()
 
+	var data []byte
+
 	// config
 	configFile, err := os.Open(*configPath)
 	if err != nil {
@@ -66,15 +68,25 @@ func main() {
 
 	// 6. unzip
 	// note: middleware can be both global and local to one handler
-	data := f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
 
 	fileSplit := strings.Split(*filePrefix, "/")
-	fileName := fileSplit[len(fileSplit)-1]
-	file, err := os.Create(fileName)
-	if err != nil {
-		log.Fatalln(err)
+    fileName := fileSplit[len(fileSplit)-1]
+    file, err := os.Create(fileName)
+    if err != nil {
+        log.Fatalln(err)
+    }
+    defer file.Close()
+
+	for {
+		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
+
+		if data == nil {
+			fmt.Println("Empty data!")
+			continue
+		}else {
+			break
+		}
 	}
-	defer file.Close()
 
 	databytes, err := io.Copy(file, bytes.NewReader(data))
 	if err != nil {

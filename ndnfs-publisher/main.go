@@ -91,7 +91,7 @@ func main() {
 	// 4. before segmenting it, encrypt it
 	m.Use(mux.AESEncryptor([]byte("example key 1234")))
 	// 3. if the data packet is too large, segment it
-	m.Use(mux.Segmentor(8200))
+	m.Use(mux.Segmentor(8192))
 	// 2. reply the interest with the on-disk cache
 	m.Use(persist.Cacher(config.ContentDB))
 	// 1. reply the interest with the in-memory cache
