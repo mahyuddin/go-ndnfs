@@ -31,7 +31,7 @@ func main() {
 
 	var data []byte
 	var retry int = 0
-	var retry_limit = 3
+	var retry_limit = 10
 
 	// config
 	configFile, err := os.Open(*configPath)
