@@ -31,7 +31,6 @@ func main() {
 
 	var data []byte
 	var retry int = 0
-	var retry_limit = 50
 
 	// config
 	configFile, err := os.Open(*configPath)
@@ -82,6 +81,8 @@ func main() {
     //fmt.Println("")
     fmt.Printf("\nFetching file %s from ndn:%s\n\n", fileName, *filePrefix)
     //fmt.Println("")
+
+    retry_limit := config.retryLimit
 
 	for retry = 0; retry <= retry_limit; retry++ {
 		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)

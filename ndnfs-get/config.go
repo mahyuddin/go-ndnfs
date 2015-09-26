@@ -7,4 +7,5 @@ var config struct {
 	File struct {
 		Dir, Prefix string
 	}
+	retryLimit int
 }

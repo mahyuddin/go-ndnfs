@@ -6,5 +6,6 @@
 	"File": {
 		"Dir": "/home/mahyuddin/share/",
 		"Prefix": "/ndn/file"
-	}
+	},
+	"retryLimit": "50"
 }
