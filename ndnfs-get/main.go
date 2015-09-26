@@ -30,6 +30,8 @@ func main() {
 	flag.Parse()
 
 	var data []byte
+	var retry int = 0
+	var retry_limit = 3
 
 	// config
 	configFile, err := os.Open(*configPath)
@@ -77,22 +79,33 @@ func main() {
     }
     defer file.Close()
 
-	for {
+    fmt.Println("")
+    fmt.Println("Fetching", fileName, "from ndn prefix", *filePrefix)
+    fmt.Println("")
+
+	for retry = 0; retry <= retry_limit; retry++ {
 		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
 
-		if data == nil {
-			fmt.Println("Empty data!")
-			continue
-		}else {
+		if data != nil {
 			break
+		}else {
+			fmt.Println("Empty data!")
 		}
 	}
 
-	databytes, err := io.Copy(file, bytes.NewReader(data))
-	if err != nil {
-		log.Fatalln(err)
-	}
+	if retry <= retry_limit {
+		databytes, err := io.Copy(file, bytes.NewReader(data))
+		if err != nil {
+			log.Fatalln(err)
+		}
 
-	fmt.Printf("wrote %d bytes\n", databytes)
+		fmt.Printf("wrote %d bytes\n", databytes)
+	} else {
+		fmt.Println("Failed to fetch", fileName, "file after", retry ,"times retry attempt.")
+		err := os.Remove(fileName)
+		if err != nil {
+        	log.Fatalln(err)
+    	}
+	}
 
 }
