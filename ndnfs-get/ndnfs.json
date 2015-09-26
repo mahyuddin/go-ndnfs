@@ -7,5 +7,5 @@
 		"Dir": "/home/mahyuddin/share/",
 		"Prefix": "/ndn/file"
 	},
-	"retryLimit": "50"
+	"RetryLimit": 50
 }

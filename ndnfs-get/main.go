@@ -78,11 +78,13 @@ func main() {
     }
     defer file.Close()
 
-    //fmt.Println("")
     fmt.Printf("\nFetching file %s from ndn:%s\n\n", fileName, *filePrefix)
-    //fmt.Println("")
 
-    retry_limit := config.retryLimit
+    retry_limit := 10
+
+    if config.RetryLimit != 0 {
+    	retry_limit = config.RetryLimit
+	}
 
 	for retry = 0; retry <= retry_limit; retry++ {
 		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
