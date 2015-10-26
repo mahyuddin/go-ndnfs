@@ -49,54 +49,45 @@ func main() {
 		log.Fatalln(err)
 	}
 
+	// create a new face
+	recv := make(chan *ndn.Interest)
+	face, err := newFace(config.NFD.Network, config.NFD.Address, recv)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer face.Close()
+
 	// key
 	pem, err := os.Open(config.PrivateKeyPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer pem.Close()
-
 	key, err = ndn.DecodePrivateKey(pem)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	log.Println("key", key.Locator())
 
-	// connect to nfd
-	//conn, err := packet.Dial(config.NFD.Network, config.NFD.Address)
-	//if err != nil {
-	//	log.Fatalln(err)
-	//}
-
-	// create a new face
-	recv := make(chan *ndn.Interest)
-	//face := ndn.NewFace(conn, recv)
-	// local face
-	local, err := newFace(config.NFD.Network, config.NFD.Address, recv)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer local.Close()
-
-	//defer face.Close()
 
 	// create an interest mux
 	m := mux.New()
-	// 7. versioning
-	m.Use(mux.Versioner)
-	// 6. logging
+	// 7. logging
 	m.Use(mux.Logger)
+	// 6. versioning
+	m.Use(mux.Versioner)
 	// 5. before encrypting it, zip it
 	m.Use(mux.Gzipper)
 	// 4. before segmenting it, encrypt it
-	m.Use(mux.AESEncryptor([]byte("example key 1234")))
+	m.Use(mux.Encryptor(key.(*ndn.RSAKey)))
 	// 3. if the data packet is too large, segment it
 	m.Use(mux.Segmentor(8192))
 	// 2. reply the interest with the on-disk cache
-	m.Use(persist.Cacher(config.ContentDB))
+	m.Use(persist.Cacher("test.db"))
 	// 1. reply the interest with the in-memory cache
 	m.Use(mux.Cacher)
 	// 0. an interest packet comes
+	m.Use(mux.Queuer)
 
 	fmt.Println("")
 	fmt.Println("Prefix = ", config.File.Prefix)
@@ -123,7 +114,7 @@ func main() {
 	m.Handle(FileServer(config.File.Prefix, config.File.Dir))
 
 	// pump the face's incoming interests into the mux
-	m.Run(local, recv, key)
+	m.Run(face, recv, key)
 }
 
 func newFace(network, address string, recv chan<- *ndn.Interest) (f *face, err error) {

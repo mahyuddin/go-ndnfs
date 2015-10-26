@@ -20,6 +20,10 @@ var (
 	filePrefix = flag.String("prefix", "/ndn/file/hosts", "name prefix for shared file")
 )
 
+//var (
+//	key ndn.Key
+//)
+
 func check(e error) {
 	if e != nil {
 		panic(e)
@@ -53,6 +57,14 @@ func main() {
 	face := ndn.NewFace(conn, nil)
 	defer face.Close()
 
+	// read producer key
+	pem, err := os.Open(config.PrivateKeyPath)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer pem.Close()
+	key, _ := ndn.DecodePrivateKey(pem)
+
 	// create a data fetcher
 	f := mux.NewFetcher()
 	// 0. a data packet comes
@@ -65,10 +77,8 @@ func main() {
 	// see producer
 	// 4. assemble segments if the content has multiple segments
 	// 5. decrypt
-	dec := mux.AESDecryptor([]byte("example key 1234"))
-
+	dec := mux.Decryptor(key.(*ndn.RSAKey))
 	// 6. unzip
-	// note: middleware can be both global and local to one handler
 
 	fileSplit := strings.Split(*filePrefix, "/")
     fileName := fileSplit[len(fileSplit)-1]
