@@ -1,7 +1,7 @@
 {
 	"PrivateKeyPath": "key/default.pri",
 	"ContentDB": "ndnfs.db",
-	"PacketSize": 8192
+	"PacketSize": 8192,
 	"NFD": {
 		"Network": "tcp",
 		"Address": ":6363"
