@@ -9,4 +9,5 @@ var config struct {
 	}
 	PrivateKeyPath string
 	ContentDB string
+	PacketSize int
 }

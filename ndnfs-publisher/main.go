@@ -69,6 +69,12 @@ func main() {
 	}
 	log.Println("key", key.Locator())
 
+	packet_size := 10
+
+    if config.PacketSize != 0 {
+    	packet_size = config.PacketSize
+	}
+
 
 	// create an interest mux
 	m := mux.New()
@@ -81,7 +87,7 @@ func main() {
 	// 4. before segmenting it, encrypt it
 	m.Use(mux.Encryptor(key.(*ndn.RSAKey)))
 	// 3. if the data packet is too large, segment it
-	m.Use(mux.Segmentor(8192))
+	m.Use(mux.Segmentor(packet_size))
 	// 2. reply the interest with the on-disk cache
 	m.Use(persist.Cacher("test.db"))
 	// 1. reply the interest with the in-memory cache
