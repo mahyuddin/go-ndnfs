@@ -69,7 +69,7 @@ func main() {
 	}
 	log.Println("key", key.Locator())
 
-	packet_size := 10
+	packet_size := 8000
 
     if config.PacketSize != 0 {
     	packet_size = config.PacketSize
