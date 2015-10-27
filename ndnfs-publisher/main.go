@@ -75,6 +75,11 @@ func main() {
     	packet_size = config.PacketSize
 	}
 
+	persist_db := "ndnfs.db"
+
+	if len(config.ContentDB) != 0 {
+    	persist_db = config.ContentDB
+	}
 
 	// create an interest mux
 	m := mux.New()
@@ -89,7 +94,7 @@ func main() {
 	// 3. if the data packet is too large, segment it
 	m.Use(mux.Segmentor(packet_size))
 	// 2. reply the interest with the on-disk cache
-	m.Use(persist.Cacher("test.db"))
+	m.Use(persist.Cacher(persist_db))
 	// 1. reply the interest with the in-memory cache
 	m.Use(mux.Cacher)
 	// 0. an interest packet comes
