@@ -17,20 +17,11 @@ import (
 	"github.com/go-ndn/persist"
 )
 
-type face struct {
-	ndn.Face
-	log.Logger
-}
-
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
 	debug      = flag.Bool("debug", false, "enable logging")
 	//filePrefix = flag.String("prefix","/ndn/file","name prefix for shared directory")
 	//fileDir	= flag.String("dir","/etc","file directory to share")
-)
-
-var (
-	key ndn.Key
 )
 
 func main() {
@@ -49,12 +40,15 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// create a new face
-	recv := make(chan *ndn.Interest)
-	face, err := newFace(config.NFD.Network, config.NFD.Address, recv)
+	// connect to nfd
+	conn, err := packet.Dial(config.NFD.Network, config.NFD.Address)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// create a new face
+	recv := make(chan *ndn.Interest)
+	face := ndn.NewFace(conn, recv)
 	defer face.Close()
 
 	// key
@@ -63,13 +57,9 @@ func main() {
 		log.Fatalln(err)
 	}
 	defer pem.Close()
-	key, err = ndn.DecodePrivateKey(pem)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	log.Println("key", key.Locator())
+	key, _ := ndn.DecodePrivateKey(pem)
 
-	packet_size := 8000
+	packet_size := 8192
 
     if config.PacketSize != 0 {
     	packet_size = config.PacketSize
@@ -126,23 +116,6 @@ func main() {
 
 	// pump the face's incoming interests into the mux
 	m.Run(face, recv, key)
-}
-
-func newFace(network, address string, recv chan<- *ndn.Interest) (f *face, err error) {
-	conn, err := packet.Dial(network, address)
-	if err != nil {
-		return
-	}
-	f = &face{
-		Face: ndn.NewFace(conn, recv),
-	}
-	if *debug {
-		f.Logger = log.New(log.Stderr, fmt.Sprintf("[%s] ", conn.RemoteAddr()))
-	} else {
-		f.Logger = log.Discard
-	}
-	f.Println("face created")
-	return
 }
 
 func IsFile(f string) (filestatus bool) {
