@@ -71,10 +71,6 @@ func main() {
     	persist_db = config.ContentDB
 	}
 
-	c := persist.NewCache(persist_db)
-
-	buffer := nil
-
 	// create an interest mux
 	m := mux.New()
 	// 7. logging
@@ -88,8 +84,7 @@ func main() {
 	// 3. if the data packet is too large, segment it
 	m.Use(mux.Segmentor(packet_size))
 	// 2. reply the interest with the on-disk cache
-	//m.Use(persist.Cacher(persist_db))
-	m.Use(mux.RawCacher(c, false))
+	m.Use(persist.Cacher(persist_db))
 
 	// 1. reply the interest with the in-memory cache
 	m.Use(mux.Cacher)
@@ -122,17 +117,6 @@ func main() {
 	}
 
 	m.Handle(FileServer(config.File.Prefix, config.File.Dir))
-
-	// create a publisher with cache
-	publisher := mux.NewPublisher(c)
-
-	// compress
-	publisher.Use(mux.Gzipper)
-	// after compress, segment
-	publisher.Use(mux.Segmentor(packet_size))
-
-	// this blob will be compressed and then segmented
-	publisher.Publish(buffer)
 
 	// pump the face's incoming interests into the mux
 	m.Run(face, recv, key)
