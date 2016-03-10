@@ -80,7 +80,7 @@ func main() {
 	// 5. before encrypting it, zip it
 	m.Use(mux.Gzipper)
 	// 4. before segmenting it, encrypt it
-	m.Use(mux.Encryptor(key.(*ndn.RSAKey)))
+	m.Use(mux.Encryptor("/producer/encrypt", key.(*ndn.RSAKey)))
 	// 3. if the data packet is too large, segment it
 	m.Use(mux.Segmentor(packet_size))
 	// 2. reply the interest with the on-disk cache
@@ -89,6 +89,9 @@ func main() {
 	m.Use(mux.Cacher)
 	// 0. an interest packet comes
 	m.Use(mux.Queuer)
+
+	// serve encryption key from cache
+	m.HandleFunc("/producer/encrypt", func(w ndn.Sender, i *ndn.Interest) {})
 
 	fmt.Println("")
 	fmt.Println("Prefix = ", config.File.Prefix)
