@@ -85,6 +85,9 @@ func main() {
 	m.Use(mux.Segmentor(packet_size))
 	// 2. reply the interest with the on-disk cache
 	m.Use(persist.Cacher(persist_db))
+
+    m.Publish(FileServer(config.File.Prefix, config.File.Dir))
+
 	// 1. reply the interest with the in-memory cache
 	m.Use(mux.Cacher)
 	// 0. an interest packet comes
