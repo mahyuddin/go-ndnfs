@@ -1,6 +1,7 @@
 package main
 
 import (
+	//"net/http"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"bufio"
 	"strings"
 
+	//"github.com/go-ndn/health"
 	"github.com/go-ndn/log"
 	"github.com/go-ndn/mux"
 	"github.com/go-ndn/ndn"
@@ -39,6 +41,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// health monitor
+	//go http.ListenAndServe("localhost:8081", nil)
 
 	// connect to nfd
 	conn, err := packet.Dial(config.NFD.Network, config.NFD.Address)
@@ -83,9 +88,10 @@ func main() {
 	// after compress, segment
 	publisher.Use(mux.Segmentor(packet_size))
 
-	fmt.Println("")
+	fmt.Println("go-ndnfs Publisher")
+	fmt.Println("==================")
+	fmt.Println()
 	fmt.Println("Prefix = ", config.File.Prefix)
-	fmt.Println("")
 
 	files, err := filepath.Glob(config.File.Dir + "/*")
 	if err != nil {
@@ -104,6 +110,7 @@ func main() {
 				publisher.Publish(insertData(config.File.Prefix + "/" + filename, files[i]))
 				fmt.Print(" - done","\n")
 			}
+			fmt.Println()
 
 		}
 
@@ -129,6 +136,8 @@ func main() {
 	m.Use(mux.Cacher)
 	// 0. an interest packet comes
 	m.Use(mux.Queuer)
+
+	//m.Use(health.Logger("health", "health.db"))
 
 	// serve encryption key from cache
 	m.HandleFunc("/producer/encrypt", func(w ndn.Sender, i *ndn.Interest) {})
