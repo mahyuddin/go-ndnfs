@@ -71,6 +71,44 @@ func main() {
     	persist_db = config.ContentDB
 	}
 
+	persist_cache,_ := persist.New(persist_db)
+
+	// Pre generate data packets
+	publisher := mux.NewPublisher(persist_cache)
+
+	//versioning first
+	publisher.Use(mux.Versioner)
+	// compress
+	publisher.Use(mux.Gzipper)
+	// after compress, segment
+	publisher.Use(mux.Segmentor(packet_size))
+
+	fmt.Println("")
+	fmt.Println("Prefix = ", config.File.Prefix)
+	fmt.Println("")
+
+	files, err := filepath.Glob(config.File.Dir + "/*")
+	if err != nil {
+		log.Fatalln(err)
+	} else {
+		fmt.Println()
+		fmt.Println("List of files")
+		fmt.Println("-------------")
+
+		for i := 0; i < len(files); i++ {
+
+			if IsFile(files[i]) {
+				_, filename := filepath.Split(files[i])
+				fmt.Println("[", i, "] -", filename)
+				fmt.Print("Publishing ", filename, " to ", config.File.Prefix, "/", filename)
+				publisher.Publish(insertData(config.File.Prefix + "/" + filename, files[i]))
+				fmt.Print(" - done","\n")
+			}
+
+		}
+
+	}
+	
 	// create an interest mux
 	m := mux.New()
 	// 7. logging
@@ -84,7 +122,8 @@ func main() {
 	// 3. if the data packet is too large, segment it
 	m.Use(mux.Segmentor(packet_size))
 	// 2. reply the interest with the on-disk cache
-	m.Use(persist.Cacher(persist_db))
+	//m.Use(persist.Cacher(persist_db))
+	m.Use(mux.RawCacher(persist_cache, false))
 
 	// 1. reply the interest with the in-memory cache
 	m.Use(mux.Cacher)
@@ -93,28 +132,6 @@ func main() {
 
 	// serve encryption key from cache
 	m.HandleFunc("/producer/encrypt", func(w ndn.Sender, i *ndn.Interest) {})
-
-	fmt.Println("")
-	fmt.Println("Prefix = ", config.File.Prefix)
-	fmt.Println("")
-
-	files, err := filepath.Glob(config.File.Dir + "/*")
-	if err != nil {
-		log.Fatalln(err)
-	} else {
-		fmt.Println()
-		fmt.Println("List of files")
-		fmt.Println("-------------")
-		for i := 0; i < len(files); i++ {
-
-			if IsFile(files[i]) {
-				_, filename := filepath.Split(files[i])
-				fmt.Println("[", i, "] -", filename)
-			}
-
-		}
-
-	}
 
 	m.Handle(FileServer(config.File.Prefix, config.File.Dir))
 
@@ -144,7 +161,7 @@ func FileServer(from, to string) (string, mux.Handler) {
 		//}
 		file, err := os.Open(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
         if err != nil {
-                 return
+        	return
         }
 
         fileInfo, _ := file.Stat()
@@ -159,4 +176,20 @@ func FileServer(from, to string) (string, mux.Handler) {
 			Content: bytes,
 		})
 	})
+}
+
+func insertData(prefix, fileName string) *ndn.Data {
+
+	file, _ := os.Open(fileName)
+    fileInfo, _ := file.Stat()
+    var fileSize int64 = fileInfo.Size()
+    bytes := make([]byte, fileSize)
+
+    buffer := bufio.NewReader(file)
+    _, _ = buffer.Read(bytes)
+
+	return &ndn.Data{
+		Name: ndn.NewName(prefix),
+		Content: bytes,
+	}
 }
