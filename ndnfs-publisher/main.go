@@ -153,10 +153,10 @@ func IsFile(f string) (filestatus bool) {
 	info, _ := os.Stat(f)
 
 	switch mode := info.Mode(); {
-	case mode.IsDir():
-		filestatus = false
-	case mode.IsRegular():
-		filestatus = true
+		case mode.IsDir():
+			filestatus = false
+		case mode.IsRegular():
+			filestatus = true
 	}
 
 	return
@@ -164,11 +164,9 @@ func IsFile(f string) (filestatus bool) {
 
 func FileServer(from, to string) (string, mux.Handler) {
 	return from, mux.HandlerFunc(func(w ndn.Sender, i *ndn.Interest) {
-		//content, err := ioutil.ReadFile(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
-		//if err != nil {
-		//	return
-		//}
+	
 		file, err := os.Open(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
+
         if err != nil {
         	return
         }
@@ -195,7 +193,7 @@ func insertData(prefix, fileName string) *ndn.Data {
     bytes := make([]byte, fileSize)
 
     buffer := bufio.NewReader(file)
-    _, _ = buffer.Read(bytes)
+    buffer.Read(bytes)
 
 	return &ndn.Data{
 		Name: ndn.NewName(prefix),
