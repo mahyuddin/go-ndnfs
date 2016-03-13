@@ -88,10 +88,12 @@ func main() {
 	// after compress, segment
 	publisher.Use(mux.Segmentor(packet_size))
 
+	fmt.Println()
 	fmt.Println("go-ndnfs Publisher")
 	fmt.Println("==================")
 	fmt.Println()
 	fmt.Println("Prefix = ", config.File.Prefix)
+	fmt.Println("Directory = ", config.File.Dir)
 
 	files, err := filepath.Glob(config.File.Dir + "/*")
 	if err != nil {
@@ -104,15 +106,15 @@ func main() {
 		for i := 0; i < len(files); i++ {
 
 			if IsFile(files[i]) {
-				_, filename := filepath.Split(files[i])
-				fmt.Println("[", i, "] -", filename)
-				fmt.Print("Publishing ", filename, " to ", config.File.Prefix, "/", filename)
-				publisher.Publish(insertData(config.File.Prefix + "/" + filename, files[i]))
+				_, fileName := filepath.Split(files[i])
+				fmt.Println("[", i, "] -", fileName)
+				fmt.Print("Publishing ", fileName, " to ", config.File.Prefix, "/", fileName)
+				publisher.Publish(insertData(config.File.Prefix + "/" + fileName, files[i]))
 				fmt.Print(" - done","\n")
+				fmt.Println()
 			}
-			fmt.Println()
-
 		}
+		fmt.Println("Pre generating data packets process is done.")
 
 	}
 	
