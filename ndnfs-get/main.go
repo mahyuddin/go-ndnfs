@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/go-ndn/log"
 	"github.com/go-ndn/mux"
@@ -16,7 +17,8 @@ import (
 
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
-	fileName = flag.String("file", "hosts", "Filename")
+	namePrefix = flag.String("prefix", "/ndn/file/hosts", "name prefix for shared file")
+	fileName = flag.String("file", "", "Filename to download")
 )
 
 func check(e error) {
@@ -30,6 +32,8 @@ func main() {
 
 	var data []byte
 	var retry int = 0
+
+	var filePrefix string
 
 	// config
 	configFile, err := os.Open(*configPath)
@@ -75,7 +79,14 @@ func main() {
 	dec := mux.Decryptor(key.(*ndn.RSAKey))
 	// 6. unzip
 
-    filePrefix := config.File.Prefix + "/" + *fileName
+	if *fileName != "" {
+		filePrefix = config.File.Prefix + "/" + *fileName
+	} else {
+		fileSplit := strings.Split(*namePrefix, "/")
+    	fileName = &fileSplit[len(fileSplit)-1]
+    	filePrefix = *namePrefix
+	}
+    
     file, err := os.Create(*fileName)
     if err != nil {
         log.Fatalln(err)
