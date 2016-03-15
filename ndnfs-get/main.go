@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/go-ndn/log"
 	"github.com/go-ndn/mux"
@@ -17,12 +16,8 @@ import (
 
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
-	filePrefix = flag.String("prefix", "/ndn/file/hosts", "name prefix for shared file")
+	fileName = flag.String("file", "hosts", "Filename")
 )
-
-//var (
-//	key ndn.Key
-//)
 
 func check(e error) {
 	if e != nil {
@@ -80,15 +75,14 @@ func main() {
 	dec := mux.Decryptor(key.(*ndn.RSAKey))
 	// 6. unzip
 
-	fileSplit := strings.Split(*filePrefix, "/")
-    fileName := fileSplit[len(fileSplit)-1]
-    file, err := os.Create(fileName)
+    filePrefix := config.File.Prefix + "/" + *fileName
+    file, err := os.Create(*fileName)
     if err != nil {
         log.Fatalln(err)
     }
     defer file.Close()
 
-    fmt.Printf("\nFetching file %s from ndn:%s\n\n", fileName, *filePrefix)
+    fmt.Printf("\nFetching file %s from ndn:%s\n\n", *fileName, filePrefix)
 
     retry_limit := 10
 
@@ -97,7 +91,7 @@ func main() {
 	}
 
 	for retry = 0; retry <= retry_limit; retry++ {
-		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(*filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
+		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
 
 		if data != nil {
 			break
@@ -114,8 +108,8 @@ func main() {
 
 		fmt.Printf("wrote %d bytes\n", databytes)
 	} else {
-		fmt.Printf("\nFailed to fetch %s file after %d times retry attempt.\n\n", fileName, retry)
-		err := os.Remove(fileName)
+		fmt.Printf("\nFailed to fetch %s file after %d times retry attempt.\n\n", *fileName, retry)
+		err := os.Remove(*fileName)
 		if err != nil {
         	log.Fatalln(err)
     	}
