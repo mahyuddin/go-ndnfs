@@ -108,7 +108,8 @@ func main() {
 			if IsFile(files[i]) {
 				_, fileName := filepath.Split(files[i])
 				fmt.Println("[", i, "] -", fileName)
-				go publisher.Publish(insertData(config.File.Prefix + "/" + fileName, files[i]))
+				publisher.Publish(insertData(config.File.Prefix + "/" + fileName, files[i]))
+				fmt.Print(" - done","\n")
 				fmt.Println()
 			}
 		}
@@ -196,8 +197,6 @@ func insertData(prefix, fileName string) *ndn.Data {
 
     buffer := bufio.NewReader(file)
     buffer.Read(bytes)
-
-    fmt.Print(" - done","\n")
 
 	return &ndn.Data{
 		Name: ndn.NewName(prefix),
