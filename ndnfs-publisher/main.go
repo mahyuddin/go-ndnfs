@@ -66,17 +66,17 @@ func main() {
 
 	packet_size := 8192
 
-    if config.PacketSize != 0 {
-    	packet_size = config.PacketSize
+	if config.PacketSize != 0 {
+		packet_size = config.PacketSize
 	}
 
 	persist_db := "ndnfs.db"
 
 	if len(config.ContentDB) != 0 {
-    	persist_db = config.ContentDB
+		persist_db = config.ContentDB
 	}
 
-	persist_cache,_ := persist.New(persist_db)
+	persist_cache, _ := persist.New(persist_db)
 
 	// Pre generate data packets
 	publisher := mux.NewPublisher(persist_cache)
@@ -108,15 +108,15 @@ func main() {
 			if IsFile(files[i]) {
 				_, fileName := filepath.Split(files[i])
 				fmt.Println("[", i, "] -", fileName)
-				publisher.Publish(insertData(config.File.Prefix + "/" + fileName, files[i]))
-				fmt.Print(" - done","\n")
+				publisher.Publish(insertData(config.File.Prefix+"/"+fileName, files[i]))
+				fmt.Print(" - done", "\n")
 				fmt.Println()
 			}
 		}
 		fmt.Println("Pre generating data packets process is done.")
 
 	}
-	
+
 	// create an interest mux
 	m := mux.New()
 	// 7. logging
@@ -154,10 +154,10 @@ func IsFile(f string) (filestatus bool) {
 	info, _ := os.Stat(f)
 
 	switch mode := info.Mode(); {
-		case mode.IsDir():
-			filestatus = false
-		case mode.IsRegular():
-			filestatus = true
+	case mode.IsDir():
+		filestatus = false
+	case mode.IsRegular():
+		filestatus = true
 	}
 
 	return
@@ -165,19 +165,19 @@ func IsFile(f string) (filestatus bool) {
 
 func FileServer(from, to string) (string, mux.Handler) {
 	return from, mux.HandlerFunc(func(w ndn.Sender, i *ndn.Interest) {
-	
+
 		file, err := os.Open(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
 
-        if err != nil {
-        	return
-        }
+		if err != nil {
+			return
+		}
 
-        fileInfo, _ := file.Stat()
-        var fileSize int64 = fileInfo.Size()
-        bytes := make([]byte, fileSize)
+		fileInfo, _ := file.Stat()
+		var fileSize int64 = fileInfo.Size()
+		bytes := make([]byte, fileSize)
 
-        buffer := bufio.NewReader(file)
-        _, err = buffer.Read(bytes)
+		buffer := bufio.NewReader(file)
+		_, err = buffer.Read(bytes)
 
 		w.SendData(&ndn.Data{
 			Name:    i.Name,
@@ -188,18 +188,18 @@ func FileServer(from, to string) (string, mux.Handler) {
 
 func insertData(prefix, fileName string) *ndn.Data {
 
-	fmt.Print("Publishing ", fileName, " to ", prefix, "/", fileName)
+	fmt.Print("Publishing ", fileName, " to ", prefix)
 
 	file, _ := os.Open(fileName)
-    fileInfo, _ := file.Stat()
-    var fileSize int64 = fileInfo.Size()
-    bytes := make([]byte, fileSize)
+	fileInfo, _ := file.Stat()
+	var fileSize int64 = fileInfo.Size()
+	bytes := make([]byte, fileSize)
 
-    buffer := bufio.NewReader(file)
-    buffer.Read(bytes)
+	buffer := bufio.NewReader(file)
+	buffer.Read(bytes)
 
 	return &ndn.Data{
-		Name: ndn.NewName(prefix),
+		Name:    ndn.NewName(prefix),
 		Content: bytes,
 	}
 }
