@@ -64,58 +64,31 @@ func main() {
 	defer pem.Close()
 	key, _ := ndn.DecodePrivateKey(pem)
 
-	packet_size := 8192
+	packetSize := 8192
 
 	if config.PacketSize != 0 {
-		packet_size = config.PacketSize
+		packetSize = config.PacketSize
 	}
 
-	persist_db := "ndnfs.db"
+	persistDB := "ndnfs.db"
 
 	if len(config.ContentDB) != 0 {
-		persist_db = config.ContentDB
+		persistDB = config.ContentDB
 	}
 
-	persist_cache, _ := persist.New(persist_db)
+	persistCache, _ := persist.New(persistDB)
 
 	// Pre generate data packets
-	publisher := mux.NewPublisher(persist_cache)
+	publisher := mux.NewPublisher(persistCache)
 
 	//versioning first
 	publisher.Use(mux.Versioner)
 	// compress
 	publisher.Use(mux.Gzipper)
 	// after compress, segment
-	publisher.Use(mux.Segmentor(packet_size))
+	publisher.Use(mux.Segmentor(packetSize))
 
-	fmt.Println()
-	fmt.Println("go-ndnfs Publisher")
-	fmt.Println("==================")
-	fmt.Println()
-	fmt.Println("Prefix = ", config.File.Prefix)
-	fmt.Println("Directory = ", config.File.Dir)
-
-	files, err := filepath.Glob(config.File.Dir + "/*")
-	if err != nil {
-		log.Fatalln(err)
-	} else {
-		fmt.Println()
-		fmt.Println("List of files")
-		fmt.Println("-------------")
-
-		for i := 0; i < len(files); i++ {
-
-			if IsFile(files[i]) {
-				_, fileName := filepath.Split(files[i])
-				fmt.Println("[", i, "] -", fileName)
-				publisher.Publish(insertData(config.File.Prefix+"/"+fileName, files[i]))
-				fmt.Print(" - done", "\n")
-				fmt.Println()
-			}
-		}
-		fmt.Println("Pre generating data packets process is done.")
-
-	}
+	publishFiles(publisher,)
 
 	// create an interest mux
 	m := mux.New()
@@ -128,10 +101,10 @@ func main() {
 	// 4. before segmenting it, encrypt it
 	m.Use(mux.Encryptor("/producer/encrypt", key.(*ndn.RSAKey)))
 	// 3. if the data packet is too large, segment it
-	m.Use(mux.Segmentor(packet_size))
+	m.Use(mux.Segmentor(packetSize))
 	// 2. reply the interest with the on-disk cache
-	//m.Use(persist.Cacher(persist_db))
-	m.Use(mux.RawCacher(persist_cache, false))
+	//m.Use(persist.Cacher(persistDB))
+	m.Use(mux.RawCacher(persistCache, false))
 
 	// 1. reply the interest with the in-memory cache
 	m.Use(mux.Cacher)
@@ -143,13 +116,13 @@ func main() {
 	// serve encryption key from cache
 	m.HandleFunc("/producer/encrypt", func(w ndn.Sender, i *ndn.Interest) {})
 
-	m.Handle(FileServer(config.File.Prefix, config.File.Dir))
+	m.Handle(fileServer(config.File.Prefix, config.File.Dir))
 
 	// pump the face's incoming interests into the mux
 	m.Run(face, recv, key)
 }
 
-func IsFile(f string) (filestatus bool) {
+func isFile(f string) (filestatus bool) {
 
 	info, _ := os.Stat(f)
 
@@ -163,7 +136,7 @@ func IsFile(f string) (filestatus bool) {
 	return
 }
 
-func FileServer(from, to string) (string, mux.Handler) {
+func fileServer(from, to string) (string, mux.Handler) {
 	return from, mux.HandlerFunc(func(w ndn.Sender, i *ndn.Interest) {
 
 		file, err := os.Open(to + filepath.Clean(strings.TrimPrefix(i.Name.String(), from)))
@@ -173,7 +146,7 @@ func FileServer(from, to string) (string, mux.Handler) {
 		}
 
 		fileInfo, _ := file.Stat()
-		var fileSize int64 = fileInfo.Size()
+		fileSize := fileInfo.Size()
 		bytes := make([]byte, fileSize)
 
 		buffer := bufio.NewReader(file)
@@ -192,7 +165,7 @@ func insertData(prefix, fileName string) *ndn.Data {
 
 	file, _ := os.Open(fileName)
 	fileInfo, _ := file.Stat()
-	var fileSize int64 = fileInfo.Size()
+	fileSize := fileInfo.Size()
 	bytes := make([]byte, fileSize)
 
 	buffer := bufio.NewReader(file)
@@ -201,5 +174,36 @@ func insertData(prefix, fileName string) *ndn.Data {
 	return &ndn.Data{
 		Name:    ndn.NewName(prefix),
 		Content: bytes,
+	}
+}
+
+func publishFiles(publisher *mux.Publisher) {
+    fmt.Println()
+	fmt.Println("go-ndnfs Publisher")
+	fmt.Println("==================")
+	fmt.Println()
+	fmt.Println("Prefix = ", config.File.Prefix)
+	fmt.Println("Directory = ", config.File.Dir)
+
+	files, err := filepath.Glob(config.File.Dir + "/*")
+	if err != nil {
+		log.Fatalln(err)
+	} else {
+		fmt.Println()
+		fmt.Println("List of files")
+		fmt.Println("-------------")
+
+		for i := 0; i < len(files); i++ {
+
+			if isFile(files[i]) {
+				_, fileName := filepath.Split(files[i])
+				fmt.Println("[", i, "] -", fileName)
+				publisher.Publish(insertData(config.File.Prefix+"/"+fileName, files[i]))
+				fmt.Print(" - done", "\n")
+				fmt.Println()
+			}
+		}
+		fmt.Println("Pre generating data packets process is done.")
+
 	}
 }
