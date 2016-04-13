@@ -18,7 +18,7 @@ import (
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
 	namePrefix = flag.String("prefix", "/ndn/file/hosts", "name prefix for shared file")
-	fileName = flag.String("file", "", "Filename to download")
+	fileName   = flag.String("file", "", "Filename to download")
 )
 
 func check(e error) {
@@ -83,22 +83,22 @@ func main() {
 		filePrefix = config.File.Prefix + "/" + *fileName
 	} else {
 		fileSplit := strings.Split(*namePrefix, "/")
-    	fileName = &fileSplit[len(fileSplit)-1]
-    	filePrefix = *namePrefix
+		fileName = &fileSplit[len(fileSplit)-1]
+		filePrefix = *namePrefix
 	}
-    
-    file, err := os.Create(*fileName)
-    if err != nil {
-        log.Fatalln(err)
-    }
-    defer file.Close()
 
-    fmt.Printf("\nFetching file %s from ndn:%s\n\n", *fileName, filePrefix)
+	file, err := os.Create(*fileName)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer file.Close()
 
-    retry_limit := 10
+	fmt.Printf("\nFetching file %s from ndn:%s\n\n", *fileName, filePrefix)
 
-    if config.RetryLimit != 0 {
-    	retry_limit = config.RetryLimit
+	retry_limit := 10
+
+	if config.RetryLimit != 0 {
+		retry_limit = config.RetryLimit
 	}
 
 	for retry = 0; retry <= retry_limit; retry++ {
@@ -106,7 +106,7 @@ func main() {
 
 		if data != nil {
 			break
-		}else {
+		} else {
 			fmt.Println("Empty data!")
 		}
 	}
@@ -122,8 +122,8 @@ func main() {
 		fmt.Printf("\nFailed to fetch %s file after %d times retry attempt.\n\n", *fileName, retry)
 		err := os.Remove(*fileName)
 		if err != nil {
-        	log.Fatalln(err)
-    	}
+			log.Fatalln(err)
+		}
 	}
 
 }

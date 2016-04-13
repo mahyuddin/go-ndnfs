@@ -8,6 +8,6 @@ var config struct {
 		Dir, Prefix string
 	}
 	PrivateKeyPath string
-	ContentDB string
-	PacketSize int
+	ContentDB      string
+	PacketSize     int
 }

@@ -22,8 +22,8 @@ import (
 var (
 	configPath = flag.String("config", "ndnfs.json", "config path")
 	debug      = flag.Bool("debug", false, "enable logging")
-	//filePrefix = flag.String("prefix","/ndn/file","name prefix for shared directory")
-	//fileDir	= flag.String("dir","/etc","file directory to share")
+	// filePrefix = flag.String("prefix","/ndn/file","name prefix for shared directory")
+	// fileDir	= flag.String("dir","/etc","file directory to share")
 )
 
 func main() {
@@ -80,7 +80,6 @@ func main() {
 
 	// Pre generate data packets
 	publisher := mux.NewPublisher(persistCache)
-
 	//versioning first
 	publisher.Use(mux.Versioner)
 	// compress
@@ -88,7 +87,7 @@ func main() {
 	// after compress, segment
 	publisher.Use(mux.Segmentor(packetSize))
 
-	publishFiles(publisher,)
+	publishFiles(publisher)
 
 	// create an interest mux
 	m := mux.New()
@@ -178,7 +177,7 @@ func insertData(prefix, fileName string) *ndn.Data {
 }
 
 func publishFiles(publisher *mux.Publisher) {
-    fmt.Println()
+	fmt.Println()
 	fmt.Println("go-ndnfs Publisher")
 	fmt.Println("==================")
 	fmt.Println()
