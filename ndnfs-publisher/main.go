@@ -10,6 +10,7 @@ import (
 	//"io/ioutil"
 	"bufio"
 	"strings"
+	"sync"
 
 	//"github.com/go-ndn/health"
 	"github.com/go-ndn/log"
@@ -160,7 +161,7 @@ func fileServer(from, to string) (string, mux.Handler) {
 
 func insertData(prefix, fileName string) *ndn.Data {
 
-	fmt.Print("Publishing ", fileName, " to ", prefix)
+	fmt.Printf("- Publishing %v to %v\n", fileName, prefix)
 
 	file, _ := os.Open(fileName)
 	fileInfo, _ := file.Stat()
@@ -177,6 +178,8 @@ func insertData(prefix, fileName string) *ndn.Data {
 }
 
 func publishFiles(publisher *mux.Publisher) {
+	var wg sync.WaitGroup
+	
 	fmt.Println()
 	fmt.Println("go-ndnfs Publisher")
 	fmt.Println("==================")
@@ -191,18 +194,21 @@ func publishFiles(publisher *mux.Publisher) {
 		fmt.Println()
 		fmt.Println("List of files")
 		fmt.Println("-------------")
-
+		wg.Add(len(files))
 		for i := 0; i < len(files); i++ {
 
 			if isFile(files[i]) {
-				_, fileName := filepath.Split(files[i])
-				fmt.Println("[", i, "] -", fileName)
-				publisher.Publish(insertData(config.File.Prefix+"/"+fileName, files[i]))
-				fmt.Print(" - done", "\n")
-				fmt.Println()
+				go func (file string, i int)  {
+					defer wg.Done()
+					_, fileName := filepath.Split(file)
+					// fmt.Println("[", i, "] -", fileName)
+					publisher.Publish(insertData(config.File.Prefix+"/"+fileName, file))
+					// fmt.Print(" - done", "\n")
+					// fmt.Println()
+				}(files[i], i)
 			}
 		}
+		wg.Wait()
 		fmt.Println("Pre generating data packets process is done.")
-
 	}
 }
