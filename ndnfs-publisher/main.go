@@ -11,6 +11,7 @@ import (
 	"bufio"
 	"strings"
 	"sync"
+	"time"
 
 	//"github.com/go-ndn/health"
 	"github.com/go-ndn/log"
@@ -194,21 +195,21 @@ func publishFiles(publisher *mux.Publisher) {
 		fmt.Println()
 		fmt.Println("List of files")
 		fmt.Println("-------------")
-		wg.Add(len(files))
+		
 		for i := 0; i < len(files); i++ {
 
 			if isFile(files[i]) {
-				go func (file string, i int)  {
+				wg.Add(1)
+				go func (file string)  {
 					defer wg.Done()
 					_, fileName := filepath.Split(file)
-					// fmt.Println("[", i, "] -", fileName)
 					publisher.Publish(insertData(config.File.Prefix+"/"+fileName, file))
-					// fmt.Print(" - done", "\n")
-					// fmt.Println()
-				}(files[i], i)
+				}(files[i])
 			}
 		}
+		time.Sleep(500 * time.Millisecond)
+		fmt.Printf("Waiting...")
 		wg.Wait()
-		fmt.Println("Pre generating data packets process is done.")
+		fmt.Printf("\rPre generating data packets process is done.\n")
 	}
 }
