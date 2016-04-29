@@ -95,13 +95,13 @@ func main() {
 
 	fmt.Printf("\nFetching file %s from ndn:%s\n\n", *fileName, filePrefix)
 
-	retry_limit := 10
+	retryLimit := 10
 
 	if config.RetryLimit != 0 {
-		retry_limit = config.RetryLimit
+		retryLimit = config.RetryLimit
 	}
 
-	for retry = 0; retry <= retry_limit; retry++ {
+	for retry = 0; retry <= retryLimit; retry++ {
 		data = f.Fetch(face, &ndn.Interest{Name: ndn.NewName(filePrefix)}, mux.Assembler, dec, mux.Gunzipper)
 
 		if data != nil {
@@ -111,7 +111,7 @@ func main() {
 		}
 	}
 
-	if retry <= retry_limit {
+	if retry <= retryLimit {
 		databytes, err := io.Copy(file, bytes.NewReader(data))
 		if err != nil {
 			log.Fatalln(err)
